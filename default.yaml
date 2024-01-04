@@ -1,0 +1,74 @@
+# Default destroyer configuration
+
+input:
+  receive: !PathArr
+    - test/color/*.jpeg
+    - test/color/*.jpg
+    - test/color/*.png
+
+progress_bar:
+  template: " Eta: {eta} {wide_bar} {percent}% | Files count: {len} "
+  chars: "->·"
+
+output:
+  save: !Each
+  path: test/output/
+  naming: !Original
+
+image:
+  format: !Original
+
+  filter:
+    - !BilateralFilter
+      id: bilateral
+      window_size: !Int 3
+      sigma_color: !Float 30.0
+      sigma_spatial: !Float 30.0
+
+    - !BoxFilter
+      id: box
+      x_radius: !Int 1
+      y_radius: !Int 1
+
+    - !GaussianBlur
+      id: gaussian_blur
+      sigma: !Float 1
+
+    - !Sharpen3x3
+      id: sharpen3x3
+
+    - !SharpenGaussian
+      id: sharpen_gaussian
+      sigma: !Float 2
+      amount: !Float 2
+
+    - !MedianFilter
+      id: median
+      x_radius: !Int 1
+      y_radius: !Int 1
+
+    - !Resize
+      id: resize
+      width: !Int 300
+      height: !Int 300
+      filter: !Point
+
+  compression:
+    - !Jpeg
+      id: jpeg
+      quality: !Int 60
+
+    - !WebP
+      id: webp
+      quality: !Int 60
+
+  adjustment:
+    - !Brighten
+      id: brighten
+      value: !Int 10
+
+    - !Contrast
+      id: contrast
+      contrast: !Float 10.0
+
+execute: [resize]
