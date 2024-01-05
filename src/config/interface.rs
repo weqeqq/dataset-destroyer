@@ -1,6 +1,7 @@
 use super::*;
 use super::enumerations::SaveFormat;
 use std::path::Path;
+use anyhow::Result;
 
 impl Config {
 	pub fn input(&self) -> &Input {
@@ -9,14 +10,17 @@ impl Config {
 	pub fn output(&self) -> &Output {
 		&self.output
 	}
-	pub fn progress_bar(&self) -> Option<&ProgressBar> {
+	pub fn progress_bar(&self) -> Option<&ProgressBarConf> {
 		self.progress_bar.as_ref()
 	}
 	pub fn image_section(&self) -> &ImageSection {
 		&self.image
 	}
-	pub fn execute(&self) -> &Vec<String> {
-		&self.execute
+	pub fn sequence(&self) -> Option<&SequenceVec> {
+		self.sequence.as_ref()
+	}
+	pub fn execute(&self) -> Result<Vec<&str>> {
+		self.execute.id_seq()
 	}
 }
 
@@ -28,16 +32,16 @@ impl Input {
 
 impl Output {
 	pub fn path(&self) -> &Path {
-		self.path.as_ref()
+		&self.path
 	}
 }
 
-impl ProgressBar {
+impl ProgressBarConf {
 	pub fn template(&self) -> &str {
-		self.template.as_ref()
+		&self.template
 	}
 	pub fn chars(&self) -> &str {
-		self.chars.as_ref()
+		&self.chars
 	}
 }
 
@@ -53,5 +57,14 @@ impl ImageSection {
 	}
 	pub fn adjustment(&self) -> Option<&AdjustmentVec> {
 		self.adjustment.as_ref()
+	}
+}
+
+impl Sequence {
+	pub fn id(&self) -> &str {
+		&self.id
+	}
+	pub fn elements(&self) -> &Vec<Parameter> {
+		&self.elements
 	}
 }

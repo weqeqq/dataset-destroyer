@@ -1,25 +1,30 @@
-use image::DynamicImage;
-use image::ColorType;
-use std::path::Path;
-use std::io::prelude::*;
-use image::ImageFormat;
-use anyhow::Result;
-use anyhow::anyhow;
-use std::fs::File;
-use image::io::Reader;
-use std::io::Cursor;
-use std::ffi::OsString;
+use image::RgbImage;
 use image::GrayImage;
+use image::RgbaImage;
+use image::GrayAlphaImage;
+use image::DynamicImage;
+
+use image::ColorType;
 use image::ColorType::*;
-use std::ffi::OsStr;
+use image::ImageFormat;
+use image::io::Reader;
+
 use image::Pixel;
 use image::Luma;
-use image::GrayAlphaImage;
 use image::LumaA;
-use image::RgbImage;
 use image::Rgb;
 use image::Rgba;
-use image::RgbaImage;
+
+use std::io::prelude::*;
+use std::io::Cursor;
+use std::fs::File;
+use std::path::Path;
+
+use std::ffi::OsStr;
+use std::ffi::OsString;
+
+use anyhow::Result;
+use anyhow::anyhow;
 
 pub mod filter;
 pub mod compression;
@@ -244,6 +249,9 @@ impl Image {
 
 		self.source.save(path.join(filename))?;
 		Ok(())
+	}
+	pub fn filename(&self) -> &str {
+		self.filename.to_str().unwrap()
 	}
 	pub fn width(&self) -> u32 {
 		self.width

@@ -29,35 +29,35 @@ pub enum SaveFormat {
 #[derive(Serialize, Deserialize)]
 pub enum Parameter {
 	Id(String),
+	RandId(Vec<String>),
+	RandMulId(Vec<String>, usize),
 
-	Percentage(u32), // todo
-	RandomPercentage(u32, u32), // todo
+	Percent(u32), // todo
+	RandPercent(), // todo
+	RandPercentFrom(Vec<u32>), // todo
 
 	Float(f32),
-	RandFloat(f32, f32), // todo
-	RandFloatFrom(Vec<f32>), // todo
-	RandFloatWithStep(f32, f32, f32), // todo
+	RandFloat(f32, f32), 
+	RandFloatFrom(Vec<f32>), 
 
 	Int(u32),
-	RandInt(usize, usize), // todo
-	RandIntFrom(Vec<u32>), // todo
-	RandIntWithStep(usize, usize, usize), // todo
+	RandInt(usize, usize), 
+	RandIntFrom(Vec<u32>),
 
 	RandResizeFilter, // todo
 	RandResizeFilterFrom(Vec<ResizeFilter>), // todo
 	RandResizeFilterWithout(Vec<ResizeFilter>), // todo
 
-	RandImgFilter, // todo
-	RandImgFilterFrom(Vec<String>), // todo
-	RandImgFilterWithout(Vec<String>), // todo
-
-	RandCompression, // todo
-	RandCompressionFrom(Vec<String>), // todo
-	RandCompressionWithout(Vec<String>), // todo
-
 	RandFormat, // todo
 	RandFormatFrom(Vec<SaveFormat>), // todo
 	RandFormatWithout(Vec<SaveFormat>), // todo
+}
+
+pub enum IdType {
+	Filter,
+	Compression,
+	Adjustment,
+	Sequence,
 }
 
 #[derive(Debug, Clone)]
@@ -65,7 +65,7 @@ pub enum Parameter {
 pub enum InputType {
 	Path(String),
 	PathArr(Vec<String>),
-	PathFile // todo
+	PathFile, // todo
 }
 
 #[derive(Debug, Clone, Copy)]

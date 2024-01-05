@@ -1,19 +1,26 @@
+use crate::config::enumerations::IdType;
+use crate::processor::image::Image;
 use crate::config::*;
 
-use anyhow::Result;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
-
-use crate::processor::image::Image;
 use self::image::filter::Filter;
 use self::image::compression::Compression;
 use self::image::adjustment::Adjustment;
 
+use anyhow::Result;
+use anyhow::anyhow;
+
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
+
 use rayon::prelude::*;
-use indicatif::ParallelProgressIterator;
+use num_traits::AsPrimitive;
+
 use indicatif::ProgressStyle;
-use indicatif::ProgressFinish;
+use indicatif::ProgressBar;
+
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 
 pub mod image;
 mod parameter;
@@ -28,7 +35,7 @@ impl Config {
 		let config: Config = serde_yaml::from_str(&string)?;
 		Ok(config)
 	}
-	fn compression_by_id<S>(&self, id: S) -> Option<Box<dyn Compression>> where S: AsRef<str> {
+	fn get_compr<S>(&self, id: S) -> Option<Box<dyn Compression>> where S: AsRef<str> {
 		let compression_section = self.image_section().compression();
 
 		if let Some(compression_vec) = compression_section {
@@ -43,7 +50,7 @@ impl Config {
 
 		None
 	}
-	fn filter_by_id<S>(&self, id: S) -> Option<Box<dyn Filter>> where S: AsRef<str> {
+	fn get_filter<S>(&self, id: S) -> Option<Box<dyn Filter>> where S: AsRef<str> {
 		let filter_section = self.image_section().filter();
 
 		if let Some(filter_vec) = filter_section {
@@ -58,7 +65,7 @@ impl Config {
 
 		None
 	}
-	fn adjustment_by_id<S>(&self, id: S) -> Option<Box<dyn Adjustment>> where S: AsRef<str> {
+	fn get_adjust<S>(&self, id: S) -> Option<Box<dyn Adjustment>> where S: AsRef<str> {
 		let adjustment_section = self.image_section().adjustment();
 
 		if let Some(adjustment_vec) = adjustment_section {
@@ -73,13 +80,70 @@ impl Config {
 
 		None
 	}
-	fn sequence_by_id<S>(&self, id: S) where S: AsRef<str> {
-		todo!()
-	}
-	pub fn start_processing(&self) -> Result<()> {
-		let path_vec = self.input().receive().files()?;
+	fn get_seq<S>(&self, id: S) -> Option<&Sequence> where S: AsRef<str> {
+		let sequence_section = self.sequence();
 
+		if let Some(sequence_vec) = sequence_section {
+			for sequence in sequence_vec {
+				if sequence.id() == id.as_ref() {
+					//println!("yes");
+					return Some(sequence);
+				}
+			}
+		}
+
+		None
+	}
+	fn get_type<S>(&self, id: S) -> Result<IdType> where S: AsRef<str> {
+		let id = id.as_ref();
+
+		let compression = self.get_compr(id);
+		let filter = self.get_filter(id);
+		let adjustment = self.get_adjust(id);
+		let sequence = self.get_seq(id);
+
+		if let Some(_) = compression {
+			return Ok(IdType::Compression);
+		}
+
+		if let Some(_) = filter {
+			return Ok(IdType::Filter);
+		}
+
+		if let Some(_) = adjustment {
+			return Ok(IdType::Adjustment);
+		}
+
+		if let Some(_) = sequence {
+			return Ok(IdType::Sequence);
+		}
+
+		return Err(anyhow!("undefined id"));
+	}
+	fn unwrap_id<S>(&self, id: S) -> Result<Vec<String>> where S: AsRef<str> {
+		let id = id.as_ref();
+
+		let mut unwrapped = Vec::<String>::new();
+		let id_type = self.get_type(id)?;
+
+		match id_type {
+			IdType::Filter | IdType::Adjustment | IdType::Compression => unwrapped.push(id.to_owned()),
+			IdType::Sequence => {
+				let seq = self.get_seq(id).unwrap();
+
+				for elem in seq.elements() {
+					for id in elem.id_seq()? {
+						unwrapped.extend(self.unwrap_id(id)?);
+					}
+				}
+			}
+		}
+
+		Ok(unwrapped)
+	}
+	fn init_progress_bar(&self, len: u64) -> Result<ProgressBar> {
 		let progress_bar = self.progress_bar();
+
 		let style = match progress_bar {
 			Some(progress_bar) => {
 				let template = progress_bar.template();
@@ -87,47 +151,75 @@ impl Config {
 
 				ProgressStyle::with_template(template)?.progress_chars(chars)
 			}
+
 			None => {
-				let template = " Eta: {eta} {wide_bar} {percent}% | Files count: {len} ";
+				let template = " Eta: {eta} {wide_bar} {percent}% | Files count: {len} {msg}";
 				let chars = "->·";
 
 				ProgressStyle::with_template(template)?.progress_chars(chars)
 			}
 		};
 
-		let results: Vec<Result<(), anyhow::Error>> = path_vec
+		let progress = ProgressBar::new(len);
+		progress.set_style(style);
+		progress.abandon();
+
+		Ok(progress)
+	}
+	fn process_image<P>(&self, path: P) -> Result<()> where P: AsRef<Path> {
+		let output = self.output().path();
+		let mut image = Image::new(path)?;
+		let mut id_seq = Vec::new();
+
+		for id in self.execute()? {
+			id_seq.extend(self.unwrap_id(id)?);
+		}
+
+		for id in id_seq.iter() {
+			let compr = self.get_compr(id);
+			let filter = self.get_filter(id);
+			let adjust = self.get_adjust(id);
+
+			if let Some(compr) = compr {
+				compr.apply(&mut image)?;
+				continue;
+			}
+
+			if let Some(filter) = filter {
+				filter.apply(&mut image)?;
+				continue;
+			}
+
+			if let Some(adjust) = adjust {
+				adjust.apply(&mut image)?;
+				continue;
+			}
+
+			return Err(anyhow!("proc error"));
+		}
+		
+		image.save(output)?;
+
+		Ok(())
+	}
+	pub fn start_parallel_processing(&self) -> Result<()> {
+		let path_vector = self.input().receive().files()?;
+		let in_error = AtomicBool::new(false);
+		let progress = self.init_progress_bar(path_vector.len().as_())?;
+
+		let results: Vec<Result<(), anyhow::Error>> = path_vector
 			.par_iter()
-
-			.progress_with_style(style)
-			.with_finish(ProgressFinish::Abandon)
-
 			.map(|path| {
-				let mut image = Image::new(path)?;
-				let output_path = self.output().path();
-				let execution_list = self.execute();
+				if !in_error.load(Ordering::Relaxed) {
+					let result = self.process_image(path);
 
-				for id in execution_list {
-					let compression = self.compression_by_id(id);
-					let filter = self.filter_by_id(id);
-					let adjustment = self.adjustment_by_id(id);
-
-					if let Some(compression) = compression {
-						compression.apply(&mut image)?;
-						break;
+					if let Err(err) = result {
+						in_error.store(true, Ordering::Relaxed);
+						return Err(err);
 					}
 
-					if let Some(filter) = filter {
-						filter.apply(&mut image)?;
-						break;
-					}
-
-					if let Some(adjustment) = adjustment {
-						adjustment.apply(&mut image)?;
-						break;
-					}
+					progress.inc(1);
 				}
-
-				image.save(output_path)?;
 
 				Ok(())
 			})

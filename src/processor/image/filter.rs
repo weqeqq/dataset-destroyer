@@ -161,8 +161,6 @@ impl Filter for Resize {
 		let nw = self.width()? as usize;
 		let nh = self.height()? as usize;
 
-		dbg!(w, h, nw, nh);
-
 		let color = image.color();
 		let channel_count = color.channel_count() as usize;
 

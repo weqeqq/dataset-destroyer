@@ -2,9 +2,9 @@
 
 input:
   receive: !PathArr
-    - test/color/*.jpeg
-    - test/color/*.jpg
-    - test/color/*.png
+    - test/color2/*.jpeg
+    - test/color2/*.jpg
+    - test/color2/*.png
 
 progress_bar:
   template: " Eta: {eta} {wide_bar} {percent}% | Files count: {len} "
@@ -50,17 +50,17 @@ image:
     - !Resize
       id: resize
       width: !Int 300
-      height: !Int 300
+      height: !Int 200
       filter: !Point
 
   compression:
     - !Jpeg
-      id: jpeg
-      quality: !Int 60
+      id: jpeg0-20
+      quality: !RandInt [0, 20]
 
     - !WebP
-      id: webp
-      quality: !Int 60
+      id: webp0-20
+      quality: !RandInt [0, 20]
 
   adjustment:
     - !Brighten
@@ -69,6 +69,19 @@ image:
 
     - !Contrast
       id: contrast
-      contrast: !Float 10.0
+      contrast: !Float 10
 
-execute: [resize]
+sequence:
+  - id: over_compressed
+    elements: [!Id webp0-20, !Id jpeg0-20]
+
+  - id: random_blur
+    elements: [!RandId [gaussian_blur, box, median]]
+
+  - id: random_sharpen
+    elements: [!RandId [sharpen_gaussian, sharpen3x3]]
+
+  - id: random_adjustment
+    elements: [!RandId [brighten, contrast]]
+
+execute: !RandMulId [[over_compressed, random_blur, random_adjustment], 2]

@@ -21,9 +21,10 @@ pub type SequenceVec = Vec<Sequence>;
 pub struct Config {
 	input: Input,
 	output: Output,
-	progress_bar: Option<ProgressBar>,
+	progress_bar: Option<ProgressBarConf>,
 	image: ImageSection,
-	execute: Vec<String>,
+	sequence: Option<SequenceVec>,
+	execute: Parameter,
 }
 
 #[derive(Debug, Clone)]
@@ -42,7 +43,7 @@ pub struct Output {
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
-pub struct ProgressBar {
+pub struct ProgressBarConf {
 	template: String,
 	chars: String,
 }
@@ -54,12 +55,12 @@ pub struct ImageSection {
 	filter: Option<FilterVec>,
 	adjustment: Option<AdjustmentVec>,
 	compression: Option<CompressionVec>,
-	sequence: Option<SequenceVec>,
 }
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
 pub struct Sequence {
 	pub id: String,
-	instance: Vec<String>,
+	elements: Vec<Parameter>,
 }
+
