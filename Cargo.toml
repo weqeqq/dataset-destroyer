@@ -19,6 +19,9 @@ rayon = "1.8.0"
 glob = "0.3.1"
 rgb = "0.8.37"
 
+[profile.dev]
+opt-level = 2
+
 [profile.release]
 codegen-units = 1
 opt-level = 3

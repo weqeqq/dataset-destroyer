@@ -83,7 +83,6 @@ impl Config {
 		if let Some(sequence_vec) = sequence_section {
 			for sequence in sequence_vec {
 				if sequence.id() == id.as_ref() {
-					//println!("yes");
 					return Some(sequence);
 				}
 			}
@@ -105,7 +104,7 @@ impl Config {
 			return Ok(IdType::Sequence);
 		}
 
-		return Err(anyhow!("undefined id"));
+		return Err(anyhow!("Unknown ID or IdType"));
 	}
 	fn unwrap_id<S>(&self, id: S) -> Result<Vec<String>> where S: AsRef<str> {
 		let id = id.as_ref();
@@ -167,9 +166,10 @@ impl Config {
 
 			if let Some(modifier) = modifier {
 				modifier.apply(&mut image)?;
+				continue;
 			}
 
-			return Err(anyhow!("proc error"));
+			return Err(anyhow!("Unknown ID"));
 		}
 
 		image.save(output)?;
