@@ -3,7 +3,6 @@ use serde::Deserialize;
 use super::enumerations::*;
 
 mod interface;
-pub type AdjustmentVec = Vec<ImageAdjustment>;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]

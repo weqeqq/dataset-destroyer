@@ -1,12 +1,13 @@
-use crate::processor::image::adjustment::Adjustment;
+use crate::processor::image::ImageModifier;
 use super::*;
+
 use anyhow::Result;
 
-impl ImageAdjustment{
-	pub fn get(&self) -> Box<dyn Adjustment>{
+impl ImageAdjustment {
+	pub fn get(&self) -> Box<dyn ImageModifier> {
 		match self.clone() {
-			Self::Brighten(a) => a,
-			Self::Contrast(a) => a,
+			Self::Brighten(m) => m,
+			Self::Contrast(m) => m,
 		}
 	}
 }

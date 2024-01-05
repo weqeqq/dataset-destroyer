@@ -37,11 +37,11 @@ pub enum Parameter {
 	RandPercentFrom(Vec<u32>), // todo
 
 	Float(f32),
-	RandFloat(f32, f32), 
-	RandFloatFrom(Vec<f32>), 
+	RandFloat(f32, f32),
+	RandFloatFrom(Vec<f32>),
 
 	Int(u32),
-	RandInt(usize, usize), 
+	RandInt(usize, usize),
 	RandIntFrom(Vec<u32>),
 
 	RandResizeFilter, // todo
@@ -51,13 +51,6 @@ pub enum Parameter {
 	RandFormat, // todo
 	RandFormatFrom(Vec<SaveFormat>), // todo
 	RandFormatWithout(Vec<SaveFormat>), // todo
-}
-
-pub enum IdType {
-	Filter,
-	Compression,
-	Adjustment,
-	Sequence,
 }
 
 #[derive(Debug, Clone)]

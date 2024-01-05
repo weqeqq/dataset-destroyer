@@ -1,9 +1,9 @@
-use serde::Serialize;
-use serde::Deserialize;
 use super::enumerations::*;
 
+use serde::Serialize;
+use serde::Deserialize;
+
 mod interface;
-pub type FilterVec = Vec<ImageFilter>;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]

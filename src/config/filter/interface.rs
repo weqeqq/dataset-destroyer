@@ -1,20 +1,21 @@
-use crate::processor::image::filter::Filter;
+use crate::processor::image::ImageModifier;
 use super::*;
 
 use anyhow::Result;
 use anyhow::anyhow;
+
 use resize::Type;
 
 impl ImageFilter {
-	pub fn get(&self) -> Box<dyn Filter> {
+	pub fn get(&self) -> Box<dyn ImageModifier> {
 		match self.clone() {
-			Self::BilateralFilter(f) => f,
-			Self::BoxFilter(f) => f,
-			Self::GaussianBlur(f) => f,
-			Self::MedianFilter(f) => f,
-			Self::Sharpen3x3(f) => f,
-			Self::Resize(f) => f,
-			Self::SharpenGaussian(f) => f,
+			Self::BilateralFilter(m) => m,
+			Self::BoxFilter(m) => m,
+			Self::GaussianBlur(m) => m,
+			Self::MedianFilter(m) => m,
+			Self::Sharpen3x3(m) => m,
+			Self::Resize(m) => m,
+			Self::SharpenGaussian(m) => m,
 		}
 	}
 }

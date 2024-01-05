@@ -1,10 +1,7 @@
-use crate::config::enumerations::IdType;
 use crate::processor::image::Image;
 use crate::config::*;
 
-use self::image::filter::Filter;
-use self::image::compression::Compression;
-use self::image::adjustment::Adjustment;
+use self::image::ImageModifier;
 
 use anyhow::Result;
 use anyhow::anyhow;
@@ -26,6 +23,11 @@ pub mod image;
 mod parameter;
 mod input;
 
+pub enum IdType {
+	Modifier,
+	Sequence,
+}
+
 impl Config {
 	pub fn open<P>(path: P) -> Result<Config> where P: AsRef<Path> {
 		let mut file = File::open(path)?;
@@ -35,44 +37,39 @@ impl Config {
 		let config: Config = serde_yaml::from_str(&string)?;
 		Ok(config)
 	}
-	fn get_compr<S>(&self, id: S) -> Option<Box<dyn Compression>> where S: AsRef<str> {
-		let compression_section = self.image_section().compression();
+	pub fn get_modifier<S>(&self, id: S) -> Option<Box<dyn ImageModifier>> where S: AsRef<str> {
+		let image_section = self.image_section();
+		let id = id.as_ref();
 
-		if let Some(compression_vec) = compression_section {
-			for image_compression in compression_vec {
+		let compression = image_section.compression();
+		let filter = image_section.filter();
+		let adjustment = image_section.adjustment();
+
+		if let Some(compression_vector) = compression {
+			for image_compression in compression_vector {
 				let compression = image_compression.get();
 
-				if compression.id() == id.as_ref() {
+				if compression.id() == id {
 					return Some(compression);
 				}
 			}
 		}
 
-		None
-	}
-	fn get_filter<S>(&self, id: S) -> Option<Box<dyn Filter>> where S: AsRef<str> {
-		let filter_section = self.image_section().filter();
-
-		if let Some(filter_vec) = filter_section {
-			for image_filter in filter_vec {
+		if let Some(filter_vector) = filter {
+			for image_filter in filter_vector {
 				let filter = image_filter.get();
 
-				if filter.id() == id.as_ref() {
+				if filter.id() == id {
 					return Some(filter);
 				}
 			}
 		}
 
-		None
-	}
-	fn get_adjust<S>(&self, id: S) -> Option<Box<dyn Adjustment>> where S: AsRef<str> {
-		let adjustment_section = self.image_section().adjustment();
-
-		if let Some(adjustment_vec) = adjustment_section {
-			for image_adjustment in adjustment_vec {
+		if let Some(adjustment_vector) = adjustment {
+			for image_adjustment in adjustment_vector {
 				let adjustment = image_adjustment.get();
 
-				if adjustment.id() == id.as_ref() {
+				if adjustment.id() == id {
 					return Some(adjustment);
 				}
 			}
@@ -80,7 +77,7 @@ impl Config {
 
 		None
 	}
-	fn get_seq<S>(&self, id: S) -> Option<&Sequence> where S: AsRef<str> {
+	fn get_sequence<S>(&self, id: S) -> Option<&Sequence> where S: AsRef<str> {
 		let sequence_section = self.sequence();
 
 		if let Some(sequence_vec) = sequence_section {
@@ -97,21 +94,11 @@ impl Config {
 	fn get_type<S>(&self, id: S) -> Result<IdType> where S: AsRef<str> {
 		let id = id.as_ref();
 
-		let compression = self.get_compr(id);
-		let filter = self.get_filter(id);
-		let adjustment = self.get_adjust(id);
-		let sequence = self.get_seq(id);
+		let modifier = self.get_modifier(id);
+		let sequence = self.get_sequence(id);
 
-		if let Some(_) = compression {
-			return Ok(IdType::Compression);
-		}
-
-		if let Some(_) = filter {
-			return Ok(IdType::Filter);
-		}
-
-		if let Some(_) = adjustment {
-			return Ok(IdType::Adjustment);
+		if let Some(_) = modifier {
+			return Ok(IdType::Modifier);
 		}
 
 		if let Some(_) = sequence {
@@ -127,11 +114,11 @@ impl Config {
 		let id_type = self.get_type(id)?;
 
 		match id_type {
-			IdType::Filter | IdType::Adjustment | IdType::Compression => unwrapped.push(id.to_owned()),
+			IdType::Modifier => unwrapped.push(id.to_owned()),
 			IdType::Sequence => {
-				let seq = self.get_seq(id).unwrap();
+				let sequence = self.get_sequence(id).unwrap();
 
-				for elem in seq.elements() {
+				for elem in sequence.elements() {
 					for id in elem.id_seq()? {
 						unwrapped.extend(self.unwrap_id(id)?);
 					}
@@ -176,28 +163,15 @@ impl Config {
 		}
 
 		for id in id_seq.iter() {
-			let compr = self.get_compr(id);
-			let filter = self.get_filter(id);
-			let adjust = self.get_adjust(id);
+			let modifier = self.get_modifier(id);
 
-			if let Some(compr) = compr {
-				compr.apply(&mut image)?;
-				continue;
-			}
-
-			if let Some(filter) = filter {
-				filter.apply(&mut image)?;
-				continue;
-			}
-
-			if let Some(adjust) = adjust {
-				adjust.apply(&mut image)?;
-				continue;
+			if let Some(modifier) = modifier {
+				modifier.apply(&mut image)?;
 			}
 
 			return Err(anyhow!("proc error"));
 		}
-		
+
 		image.save(output)?;
 
 		Ok(())

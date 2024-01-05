@@ -30,6 +30,11 @@ pub mod filter;
 pub mod compression;
 pub mod adjustment;
 
+pub trait ImageModifier {
+	fn apply(&self, image: &mut Image) -> Result<()>;
+	fn id(&self) -> &str;
+}
+
 pub struct Image {
 	source: DynamicImage,
 	color: ColorType,
@@ -237,18 +242,18 @@ impl Image {
 			_ => unimplemented!(),
 		}
 	}
-	pub fn source(&self) -> &DynamicImage {
-		&self.source
-	}
-	pub fn source_mut(&mut self) -> &mut DynamicImage {
-		&mut self.source
-	}
 	pub fn save<P>(&self, path: P) -> Result<()> where P: AsRef<Path> {
 		let path = path.as_ref();
 		let filename: &OsStr = self.filename.as_ref();
 
 		self.source.save(path.join(filename))?;
 		Ok(())
+	}
+	pub fn source(&self) -> &DynamicImage {
+		&self.source
+	}
+	pub fn source_mut(&mut self) -> &mut DynamicImage {
+		&mut self.source
 	}
 	pub fn filename(&self) -> &str {
 		self.filename.to_str().unwrap()

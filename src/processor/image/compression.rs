@@ -11,13 +11,9 @@ use codecs::webp::WebPQuality;
 use std::io::Cursor;
 
 use anyhow::Result;
+use super::ImageModifier;
 
-pub trait Compression {
-	fn apply(&self, image: &mut Image) -> Result<()>;
-	fn id(&self) -> &str;
-}
-
-impl Compression for Jpeg {
+impl ImageModifier for Jpeg {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let quality = self.quality()? as u8;
 
@@ -38,7 +34,7 @@ impl Compression for Jpeg {
 	}
 }
 
-impl Compression for WebP {
+impl ImageModifier for WebP {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let quality = self.quality()? as u8;
 

@@ -1,12 +1,13 @@
-use crate::processor::image::compression::Compression;
+use crate::processor::image::ImageModifier;
 use super::*;
+
 use anyhow::Result;
 
 impl ImageCompression {
-	pub fn get(&self) -> Box<dyn Compression> {
+	pub fn get(&self) -> Box<dyn ImageModifier> {
 		match self.clone() {
-			Self::Jpeg(c) => c,
-			Self::WebP(c) => c,
+			Self::Jpeg(m) => m,
+			Self::WebP(m) => m,
 		}
 	}
 }

@@ -1,5 +1,6 @@
 use crate::config::filter::*;
 use super::Image;
+use super::ImageModifier;
 
 use anyhow::Result;
 use anyhow::anyhow;
@@ -13,12 +14,7 @@ use image::RgbaImage;
 use rgb::FromSlice;
 use num_traits::AsPrimitive;
 
-pub trait Filter {
-	fn apply(&self, image: &mut Image) -> Result<()>;
-	fn id(&self) -> &str;
-}
-
-impl Filter for GaussianBlur {
+impl ImageModifier for GaussianBlur {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let sigma = self.sigma()?;
 
@@ -43,7 +39,7 @@ impl Filter for GaussianBlur {
 	}
 }
 
-impl Filter for BilateralFilter {
+impl ImageModifier for BilateralFilter {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let window_size = self.window_size()?;
 		let sigma_color = self.sigma_color()?;
@@ -67,7 +63,7 @@ impl Filter for BilateralFilter {
 	}
 }
 
-impl Filter for BoxFilter {
+impl ImageModifier for BoxFilter {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let x_radius = self.x_radius()?;
 		let y_radius = self.y_radius()?;
@@ -90,7 +86,7 @@ impl Filter for BoxFilter {
 	}
 }
 
-impl Filter for Sharpen3x3 {
+impl ImageModifier for Sharpen3x3 {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let channels = image.separate_channels()?;
 		let mut filtered_channels = Vec::new();
@@ -110,7 +106,7 @@ impl Filter for Sharpen3x3 {
 	}
 }
 
-impl Filter for SharpenGaussian {
+impl ImageModifier for SharpenGaussian {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let sigma = self.sigma()?;
 		let amount = self.amount()?;
@@ -133,7 +129,7 @@ impl Filter for SharpenGaussian {
 	}
 }
 
-impl Filter for MedianFilter {
+impl ImageModifier for MedianFilter {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let x_radius = self.x_radius()?;
 		let y_radius = self.y_radius()?;
@@ -153,7 +149,7 @@ impl Filter for MedianFilter {
 	}
 }
 
-impl Filter for Resize {
+impl ImageModifier for Resize {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let w = image.width() as usize;
 		let h = image.height() as usize;

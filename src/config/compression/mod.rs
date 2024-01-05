@@ -3,7 +3,6 @@ use serde::Deserialize;
 use super::enumerations::*;
 
 mod interface;
-pub type CompressionVec = Vec<ImageCompression>;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]

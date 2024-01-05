@@ -1,14 +1,9 @@
 use crate::config::adjustment::*;
-use super::Image;
+use super::{Image, ImageModifier};
 
 use anyhow::Result;
 
-pub trait Adjustment {
-	fn apply(&self, image: &mut Image) -> Result<()>;
-	fn id(&self) -> &str;
-}
-
-impl Adjustment for Brighten {
+impl ImageModifier for Brighten {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let value = self.value()?;
 
@@ -21,7 +16,7 @@ impl Adjustment for Brighten {
 	}
 }
 
-impl Adjustment for Contrast {
+impl ImageModifier for Contrast {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let contrast = self.contrast()?;
 
