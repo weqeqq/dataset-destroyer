@@ -6,8 +6,8 @@ input:
     - test/color2/*.jpg
     - test/color2/*.png
 
-progress_bar:
-  template: " Eta: {eta} {wide_bar} {percent}% | Files count: {len} "
+progress:
+  template: " Elapsed: {elapsed} {wide_bar} {percent}% | Files count: {pos}/{len} "
   chars: "->·"
 
 output:
@@ -55,8 +55,8 @@ image:
 
   compression:
     - !Jpeg
-      id: jpeg0-20
-      quality: !RandInt [0, 20]
+      id: jpeg
+      quality: !Int 60
 
     - !WebP
       id: webp0-20
@@ -84,4 +84,4 @@ sequence:
   - id: random_adjustment
     elements: [!RandId [brighten, contrast]]
 
-execute: !RandMulId [[over_compressed, random_blur, random_adjustment], 2]
+execute: !Id webp0-20

@@ -139,7 +139,7 @@ impl Config {
 			}
 
 			None => {
-				let template = " Eta: {eta} {wide_bar} {percent}% | Files count: {len} {msg}";
+				let template = " Elapsed: {elapsed} {wide_bar} {percent}% | Files count: {pos}/{len} ";
 				let chars = "->·";
 
 				ProgressStyle::with_template(template)?.progress_chars(chars)
