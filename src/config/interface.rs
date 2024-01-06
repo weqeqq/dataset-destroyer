@@ -1,27 +1,51 @@
+use crate::processor::image::Modifier;
 use super::*;
-use super::enumerations::SaveFormat;
 
 use std::path::Path;
-use anyhow::Result;
+
+impl ImageModifier {
+	pub fn get(&self) -> Box<dyn Modifier> {
+		match self.clone() {
+			Self::BilateralFilter(m) => m,
+			Self::BoxFilter(m) => m,
+			Self::GaussianBlur(m) => m,
+			Self::MedianFilter(m) => m,
+			Self::Sharpen3x3(m) => m,
+			Self::SharpenGaussian(m) => m,
+
+			Self::Jpeg(m) => m,
+			Self::WebP(m) => m,
+
+			Self::Brighten(m) => m,
+			Self::Contrast(m) => m,
+
+			Self::Resize(m) => m,
+			Self::ToLuma(m) => m,
+			Self::ToLumaAlpha(m) => m,
+			Self::ToRgb(m) => m,
+			Self::ToRgba(m) => m,
+		}
+	}
+}
 
 impl Config {
-	pub fn input(&self) -> &Input {
-		&self.input
+	pub fn input(&self) -> Option<&Input> {
+		self.input.as_ref()
 	}
-	pub fn output(&self) -> &Output {
-		&self.output
+	pub fn output(&self) -> Option<&Output> {
+		self.output.as_ref()
 	}
-	pub fn progress_bar(&self) -> Option<&ProgressSettings> {
+	pub fn progress(&self) -> Option<&ProgressSettings> {
 		self.progress.as_ref()
 	}
-	pub fn image_section(&self) -> &ImageSection {
-		&self.image
+	pub fn define(&self) -> Option<&Vec<ImageModifier>> {
+		self.define.as_ref()
 	}
 	pub fn sequence(&self) -> Option<&Vec<Sequence>> {
 		self.sequence.as_ref()
 	}
-	pub fn execute(&self) -> Result<Vec<&str>> {
-		self.execute.id_seq()
+	pub fn execute(&self) -> Option<&Parameter> {
+		self.execute.as_ref()
 	}
 }
 
@@ -43,21 +67,6 @@ impl ProgressSettings {
 	}
 	pub fn chars(&self) -> &str {
 		&self.chars
-	}
-}
-
-impl ImageSection {
-	pub fn format(&self) -> SaveFormat {
-		self.format
-	}
-	pub fn filter(&self) -> Option<&Vec<ImageFilter>> {
-		self.filter.as_ref()
-	}
-	pub fn compression(&self) -> Option<&Vec<ImageCompression>> {
-		self.compression.as_ref()
-	}
-	pub fn adjustment(&self) -> Option<&Vec<ImageAdjustment>> {
-		self.adjustment.as_ref()
 	}
 }
 

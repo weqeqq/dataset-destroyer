@@ -1,24 +1,6 @@
-use crate::processor::image::ImageModifier;
 use super::*;
 
 use anyhow::Result;
-use anyhow::anyhow;
-
-use resize::Type;
-
-impl ImageFilter {
-	pub fn get(&self) -> Box<dyn ImageModifier> {
-		match self.clone() {
-			Self::BilateralFilter(m) => m,
-			Self::BoxFilter(m) => m,
-			Self::GaussianBlur(m) => m,
-			Self::MedianFilter(m) => m,
-			Self::Sharpen3x3(m) => m,
-			Self::Resize(m) => m,
-			Self::SharpenGaussian(m) => m,
-		}
-	}
-}
 
 impl BilateralFilter {
 	pub fn window_size(&self) -> Result<u32> {
@@ -60,29 +42,5 @@ impl MedianFilter {
 	}
 	pub fn y_radius(&self) -> Result<u32> {
 		self.y_radius.int()
-	}
-}
-
-impl Resize {
-	pub fn width(&self) -> Result<u32> {
-		if let Some(width) = self.width.as_ref() { width.int() } else { Err(anyhow!("width error")) }
-	}
-	pub fn height(&self) -> Result<u32> {
-		if let Some(height) = self.height.as_ref() {
-			height.int()
-		} else {
-			Err(anyhow!("height error "))
-		}
-	}
-	pub fn filter(&self) -> Type {
-		match self.filter {
-			ResizeFilter::Point => Type::Point,
-			ResizeFilter::Triangle => Type::Triangle,
-			ResizeFilter::Catrom => Type::Catrom,
-			ResizeFilter::Mitchell => Type::Mitchell,
-			ResizeFilter::BSpline => Type::BSpline,
-			ResizeFilter::Gaussian => Type::Gaussian,
-			ResizeFilter::Lanczos3 => Type::Lanczos3,
-		}
 	}
 }

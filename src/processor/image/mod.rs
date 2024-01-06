@@ -29,8 +29,9 @@ use anyhow::anyhow;
 pub mod filter;
 pub mod compression;
 pub mod adjustment;
+pub mod operation;
 
-pub trait ImageModifier {
+pub trait Modifier {
 	fn apply(&self, image: &mut Image) -> Result<()>;
 	fn id(&self) -> &str;
 }

@@ -7,18 +7,6 @@ mod interface;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
-pub enum ImageFilter {
-	Resize(Box<Resize>),
-	BoxFilter(Box<BoxFilter>),
-	Sharpen3x3(Box<Sharpen3x3>),
-	GaussianBlur(Box<GaussianBlur>),
-	MedianFilter(Box<MedianFilter>),
-	BilateralFilter(Box<BilateralFilter>),
-	SharpenGaussian(Box<SharpenGaussian>),
-}
-
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
 pub struct BilateralFilter {
 	pub id: String,
 	window_size: Parameter,
@@ -61,13 +49,4 @@ pub struct MedianFilter {
 	pub id: String,
 	x_radius: Parameter,
 	y_radius: Parameter,
-}
-
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
-pub struct Resize {
-	pub id: String,
-	width: Option<Parameter>,
-	height: Option<Parameter>,
-	filter: ResizeFilter,
 }

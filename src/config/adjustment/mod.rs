@@ -6,13 +6,6 @@ mod interface;
 
 #[derive(Debug, Clone)]
 #[derive(Serialize, Deserialize)]
-pub enum ImageAdjustment {
-	Brighten(Box<Brighten>),
-	Contrast(Box<Contrast>),
-}
-
-#[derive(Debug, Clone)]
-#[derive(Serialize, Deserialize)]
 pub struct Brighten {
 	pub id: String,
 	value: Parameter,

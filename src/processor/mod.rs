@@ -1,7 +1,7 @@
 use crate::processor::image::Image;
 use crate::config::*;
 
-use self::image::ImageModifier;
+use self::image::Modifier;
 
 use anyhow::Result;
 use anyhow::anyhow;
@@ -37,44 +37,19 @@ impl Config {
 		let config: Config = serde_yaml::from_str(&string)?;
 		Ok(config)
 	}
-	pub fn get_modifier<S>(&self, id: S) -> Option<Box<dyn ImageModifier>> where S: AsRef<str> {
-		let image_section = self.image_section();
+	pub fn get_modifier<S>(&self, id: S) -> Option<Box<dyn Modifier>> where S: AsRef<str> {
+		let modifier = self.define();
 		let id = id.as_ref();
 
-		let compression = image_section.compression();
-		let filter = image_section.filter();
-		let adjustment = image_section.adjustment();
+		if let Some(modifier_vector) = modifier {
+			for image_modifier in modifier_vector {
+				let modifier = image_modifier.get();
 
-		if let Some(compression_vector) = compression {
-			for image_compression in compression_vector {
-				let compression = image_compression.get();
-
-				if compression.id() == id {
-					return Some(compression);
+				if modifier.id() == id {
+					return Some(modifier);
 				}
 			}
 		}
-
-		if let Some(filter_vector) = filter {
-			for image_filter in filter_vector {
-				let filter = image_filter.get();
-
-				if filter.id() == id {
-					return Some(filter);
-				}
-			}
-		}
-
-		if let Some(adjustment_vector) = adjustment {
-			for image_adjustment in adjustment_vector {
-				let adjustment = image_adjustment.get();
-
-				if adjustment.id() == id {
-					return Some(adjustment);
-				}
-			}
-		}
-
 		None
 	}
 	fn get_sequence<S>(&self, id: S) -> Option<&Sequence> where S: AsRef<str> {
@@ -128,7 +103,7 @@ impl Config {
 		Ok(unwrapped)
 	}
 	fn init_progress_bar(&self, len: u64) -> Result<ProgressBar> {
-		let progress_bar = self.progress_bar();
+		let progress_bar = self.progress();
 
 		let style = match progress_bar {
 			Some(progress_bar) => {
@@ -153,11 +128,13 @@ impl Config {
 		Ok(progress)
 	}
 	fn process_image<P>(&self, path: P) -> Result<()> where P: AsRef<Path> {
-		let output = self.output().path();
+		let output = self.output().ok_or(anyhow!("output"))?;
+		let output_path = output.path();
+
 		let mut image = Image::new(path)?;
 		let mut id_seq = Vec::new();
 
-		for id in self.execute()? {
+		for id in self.execute().ok_or(anyhow!("execute"))?.id_seq()? {
 			id_seq.extend(self.unwrap_id(id)?);
 		}
 
@@ -172,12 +149,14 @@ impl Config {
 			return Err(anyhow!("Unknown ID"));
 		}
 
-		image.save(output)?;
+		image.save(output_path)?;
 
 		Ok(())
 	}
 	pub fn start_parallel_processing(&self) -> Result<()> {
-		let path_vector = self.input().receive().files()?;
+		let input = self.input().ok_or(anyhow!("input"))?;
+		let path_vector = input.receive().files()?;
+
 		let in_error = AtomicBool::new(false);
 		let progress = self.init_progress_bar(path_vector.len().as_())?;
 

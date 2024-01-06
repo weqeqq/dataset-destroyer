@@ -11,9 +11,9 @@ use codecs::webp::WebPQuality;
 use std::io::Cursor;
 
 use anyhow::Result;
-use super::ImageModifier;
+use super::Modifier;
 
-impl ImageModifier for Jpeg {
+impl Modifier for Jpeg {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let quality = self.quality()? as u8;
 
@@ -34,7 +34,7 @@ impl ImageModifier for Jpeg {
 	}
 }
 
-impl ImageModifier for WebP {
+impl Modifier for WebP {
 	fn apply(&self, image: &mut Image) -> Result<()> {
 		let quality = self.quality()? as u8;
 

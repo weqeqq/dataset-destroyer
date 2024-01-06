@@ -2,74 +2,83 @@
 
 input:
   receive: !PathArr
-    - test/color2/*.jpeg
-    - test/color2/*.jpg
-    - test/color2/*.png
+    - test/input/*.jpeg
+    - test/input/*.jpg
+    - test/input/*.png
+
+output:
+  save: !Each
+  path: test/output/
+
+  naming: !Original
+  format: !Original
 
 progress:
   template: " Elapsed: {elapsed} {wide_bar} {percent}% | Files count: {pos}/{len} "
   chars: "->·"
 
-output:
-  save: !Each
-  path: test/output/
-  naming: !Original
+define:
+  - !BilateralFilter
+    id: bilateral
+    window_size: !Int 3
+    sigma_color: !Float 30.0
+    sigma_spatial: !Float 30.0
 
-image:
-  format: !Original
+  - !BoxFilter
+    id: box
+    x_radius: !Int 1
+    y_radius: !Int 1
 
-  filter:
-    - !BilateralFilter
-      id: bilateral
-      window_size: !Int 3
-      sigma_color: !Float 30.0
-      sigma_spatial: !Float 30.0
+  - !GaussianBlur
+    id: gaussian_blur
+    sigma: !Float 1
 
-    - !BoxFilter
-      id: box
-      x_radius: !Int 1
-      y_radius: !Int 1
+  - !Sharpen3x3
+    id: sharpen3x3
 
-    - !GaussianBlur
-      id: gaussian_blur
-      sigma: !Float 1
+  - !SharpenGaussian
+    id: sharpen_gaussian
+    sigma: !Float 2
+    amount: !Float 2
 
-    - !Sharpen3x3
-      id: sharpen3x3
+  - !MedianFilter
+    id: median
+    x_radius: !Int 1
+    y_radius: !Int 1
 
-    - !SharpenGaussian
-      id: sharpen_gaussian
-      sigma: !Float 2
-      amount: !Float 2
+  - !Resize
+    id: resize
+    width: !Int 300
+    height: !Int 200
+    filter: !Point
 
-    - !MedianFilter
-      id: median
-      x_radius: !Int 1
-      y_radius: !Int 1
+  - !Jpeg
+    id: jpeg
+    quality: !Int 60
 
-    - !Resize
-      id: resize
-      width: !Int 300
-      height: !Int 200
-      filter: !Point
+  - !WebP
+    id: webp 
+    quality: !Int 60 
 
-  compression:
-    - !Jpeg
-      id: jpeg
-      quality: !Int 60
+  - !Brighten
+    id: brighten
+    value: !Int 10
 
-    - !WebP
-      id: webp0-20
-      quality: !RandInt [0, 20]
+  - !Contrast
+    id: contrast
+    contrast: !Float 10
 
-  adjustment:
-    - !Brighten
-      id: brighten
-      value: !Int 10
+  - !ToLumaAlpha
+    id: to_luma_alpha
 
-    - !Contrast
-      id: contrast
-      contrast: !Float 10
+  - !ToLuma
+    id: to_luma
+
+  - !ToRgba
+    id: to_rgba
+
+  - !ToRgb
+    id: to_rgb
 
 sequence:
   - id: over_compressed
@@ -83,5 +92,8 @@ sequence:
 
   - id: random_adjustment
     elements: [!RandId [brighten, contrast]]
-
-execute: !Id webp0-20
+  
+  - id: gray_webp 
+    elements: [!Id to_rgb, !Id webp, !Id to_luma]
+  
+execute: !Id gray_webp 
